@@ -1,0 +1,375 @@
+
+<html>
+<head>
+  <title>Post Admin - MKS API</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+  <style type="text/css">
+    .item {
+      padding: 8px;
+      width: 200px;
+      background: #ccc;
+    }
+    .buttons{
+    	width:100%;
+    	margin:0 auto;
+    }
+    table{
+    	margin:auto;
+    	width:70%;
+    }
+    .item.active {
+      background: #cfc;
+    }
+    .data {
+    	width:400px;
+
+    	border: 1px solid black;
+    }
+    .ui-selected{
+    	background-color:#69B0A0;
+    }
+    th{
+    	padding-left: 10px
+    }
+    tr{
+    	min-height:10px;
+    }
+    tr.data:hover{
+    	
+    	background-color:#69B0A0;
+}
+    }
+    td, th {
+    	margin-left: 10px;
+		padding-left: 10px !important;
+		padding-right: 10px !important;
+		border-left: 1px solid black;
+	}
+  </style>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script> 
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.11.1/themes/smoothness/jquery-ui.css" />
+
+
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css">
+
+<!-- Latest compiled and minified JavaScript -->
+
+  <script src="bootbox.min.js"></script>
+</head>
+<body>
+<h1 align='center'>MKS API Post Admin tool</h1>
+<div><table class="data"><tr class="dataH"><th>id</th><th>Reviewer</th><th>Venue</th><th>Rating</th><th>   </th></table>
+<div align='center' class='buttons'><input type="submit" id="add" value="Add a Post"></input><input type="submit" id="refresh" value="Refresh"></input></div>
+</div>
+<!--<script src="https://code.jquery.com/ui/1.11.1/jquery-ui.min.js"></script> -->
+<script type="text/javascript">
+var a
+var delTarget
+     var restaurant_reviews
+     function getData()
+     {
+        $.get("http://critics.api.mks.io/restaurants", function (reviews) {
+        restaurant_reviews = reviews
+        loadRestaurants()
+
+
+        })
+
+        $.get("http://critics.api.mks.io/movie-genres", function (reviews) {
+        movie_reviews = reviews
+        console.log("Movie data loaded.")
+
+        })
+        $.get("http://critics.api.mks.io/cheeses", function (reviews) {
+        cheese_reviews = reviews
+        console.log("Cheese data loaded.")
+
+        })
+    }
+function loadRestaurants()
+{
+
+	rows = $('tr','table.data')
+
+	for(i=1;i<rows.length; i++)
+	{
+		rows[i].remove()
+	}
+  	restaurant_reviews.forEach(function(r) {
+    //$("table.data").append("<tr class='data'><td>"+r.id+"</td><<td>"+r.reviewer+"</td><<td>"+r.venue+"</td><<td>"+r.rating+"</td></tr>")
+	row = $('<tr/>')
+	row.dataObject = r
+	id = $('<td/>')
+	reviewer = $('<td/>')
+	venue = $('<td/>')
+	rating = $('<td/>')
+	del= $('<td/>')
+	del_icon = $('<img/>')
+	id.html(r.id)
+	reviewer.html(r.reviewer)
+	venue.html(r.venue)
+	rating.html(r.rating)
+	row.append(id)
+	row.append(reviewer)
+	row.append(venue)
+	row.append(rating)
+	del.append(del_icon)
+	del_icon.attr('src', 'editing-delete-icon.png')
+	del_icon.attr('height', '20px')
+	del_icon.attr('alt', 'Delete post #'+r.id)
+	del_icon.attr('title', 'Delete post #'+r.id)
+	delTarget = r.id
+	del_icon.click(function(e){
+
+		id = $(e.currentTarget.children[0]).html()
+		s="<h1>Delete Post?</h1>"
+		s+="Are you <b>sure</b> you want to delete post "+r.id+"?<br/>"
+
+
+
+
+		bootbox.alert(s, function(s) {
+        a = s;
+
+       	 data = {}
+        
+
+       
+        data['Accept'] ='application/json'
+       	 data['Content-Type'] = 'application/x-www-form-urlencoded'
+       	 console.log(data)
+       	 url = 'http://critics.api.mks.io/restaurants/'+delTarget
+       	 success = function(o){
+       	 	getData()
+       	 }
+       	 dataType ="json"
+       	 $.ajax({
+			  type: "DELETE",
+			  url: url,
+			  data: data,
+			  success: success,
+			  dataType: dataType
+			}).fail(function(o){
+       	 	bootbox.alert("<h1>Error Saving Review!</h1><p>"+o.responseJSON.comment[0]+"</p>")	
+       	 });
+	})
+ })
+	row.append(del)
+	row.addClass("data")
+	row.click(function(e){
+		id = $(e.currentTarget.children[0]).html()
+		r = locateByID(id)
+		s="<h1>Read Review</h1>"
+		s+="<b>Post ID: </b>"+r.id+"<br/>"
+      s+= "<b>By: </b>"+r.reviewer+"<br/>"
+      s+="<b>Venue Name: </b>"+r.venue+"<br/><br/>	"
+      s+=r.comment
+
+
+
+		bootbox.alert(s)
+	})
+
+
+	$("table.data").append(row)
+  })
+  /*	$(".data").selectable({selected: function( event, ui ) {
+  		a = ui//.class("ui-selected")
+
+  	}}) */
+
+
+
+
+}
+$(function(){$(add).click(function(e){
+		
+
+		s="<h1>Add a Review</h1></form>"
+		s+="<form class='add'>"
+		s+="<table>"
+		s+="<tr><td><label>Name:</label> <input type='text' id='reviewer'></input></td></tr>"
+		s+="<tr><td><label>Venue:</label> <input type='text' id='venue'></input></td></tr>"
+		s+="<tr><td><label>Rating:</label> <select id='rating'><option value='1'>1</option><option value='2'>2</option><option value='3'>3</option><option value='4'>4</option><option value='5'>5</option><option value='6'>6</option><option value='7'>7</option><option value='8'>8</option><option value='9'>9</option><option value='10'>10</option></select></td></tr>"
+		s+="<tr><td><label>Comments:</label> <input type='text' id='comment'></input></td></tr>"
+		s+="</table>"
+		s+="</form>"
+
+		bootbox.alert(s, function(s) {
+        a = s;
+        rows = $("form.add").contents().children().children()
+       	 data = {}
+       	 $(rows).each(function(x){
+        	field = $(rows[x]).children().children()[1]
+        	data[$(field).prop('id')] =$(field).val()
+
+        
+
+        })
+       	 data['Accept'] ='application/json'
+       	 data['Content-Type'] = 'application/x-www-form-urlencoded'
+       	 console.log(data)
+       	 url = 'http://critics.api.mks.io/restaurants'
+       	 success = function(o){
+       	 	delTarget = 0
+       	 	getData()
+       	 }
+       	 dataType ="json"
+       	 $.ajax({
+			  type: "POST",
+			  url: url,
+			  data: data,
+			  success: success,
+			  dataType: dataType
+			}).fail(function(o){
+				a = o
+       	 	bootbox.alert("<h1>Error Saving Review!</h1><p>"+o.responseJSON.comment[0]+"</p>")	
+       	 });
+
+
+      })
+	})})
+function locateByID(id)
+{
+	var out
+	restaurant_reviews.forEach(function(r) 
+	{
+		
+		console.log(r.id+" "+id)
+		if(r.id == parseInt(id))
+		{
+			console.log("returning post with ID:"+r.id)
+			out = r
+		}
+		else
+		{		
+			console.log(r.id+"!="+parseInt(id))
+		}
+	})
+	return out
+}
+
+
+/*function goodRestaurants()
+{
+
+  var eights = []
+  var nines = []
+  var tens = []
+
+    e_string = "8 - "
+  n_string = "9 - "
+  t_string = "10 - "
+  restaurant_reviews.forEach(function(r) {
+    if (r.rating =="8") {
+      eights.push(r.venue)
+    }
+    if (r.rating =="9") {
+      nines.push(r.venue)
+    }
+    if (r.rating =="10") {
+      tens.push(r.venue)
+    }
+  })
+
+      console.log(t_string+tens.join())
+      console.log(n_string+nines.join())
+      console.log(e_string+eights.join())
+
+
+
+
+}
+
+function austinRestaurants()
+{
+    console.log("Austin Restaurants")
+    restaurant_reviews.forEach(function(r) {
+    if(r.venue.indexOf("Austin") > -1)
+      console.log(r.venue)
+  })
+
+   
+}
+
+
+function mostRatedGenres()
+{
+    var genres = {}
+    movie_reviews.forEach(function(r) {
+      console.log(r.genre)
+      if(!genres[r.genre])
+        genres[r.genre] = 1
+      else
+        genres[r.genre]++
+  })
+
+a =Object.keys(genres)
+
+a.sort(function(a,b){return genres[b]-genres[a]})
+   console.log("Most Rated Movie Genres")
+   console.log(a[0]+": "+genres[a[0]]+" ratings")
+   console.log(a[1]+": "+genres[a[1]]+" ratings")
+   console.log(a[2]+": "+genres[a[2]]+" ratings")
+}
+
+function bestRatedGenres()
+{
+
+    var genres = {}
+    movie_reviews.forEach(function(r) {
+      if(!genres[r.genre])
+        genres[r.genre] = []
+      genres[r.genre].push(r.rating)
+  })
+    k =Object.keys(genres)
+    k.forEach(function(key){
+      var total = 0;
+      g = genres[key];
+
+      a = g.forEach(function(x){
+        total+= parseInt(x)
+      })
+      genres[key] = total/g.length
+      total= 0
+      
+    })
+k.sort(function(a,b){return genres[b]-genres[a]})
+   console.log("Most Rated Movie Genres")
+   console.log(k[0]+": Average Rating of:"+genres[k[0]])
+   console.log(k[1]+": Average Rating of:"+genres[k[1]])
+   console.log(k[2]+": Average Rating of:"+genres[k[2]])
+
+/*a =Object.keys(genres)
+
+a.sort(function(a,b){return genres[b]-genres[a]})
+   console.log("Most Rated Movie Types")
+   console.log(a[0]+": "+genres[a[0]]+" ratings")
+   console.log(a[1]+": "+genres[a[1]]+" ratings")
+   console.log(a[2]+": "+genres[a[2]]+" ratings")
+} 
+function cheeseReviews()
+{
+    console.log("Cheese Reviews")
+    cheese_reviews.forEach(function(r) {
+    
+      console.log(r.cheese+":"+r.comment+" --"+r.reviewer)
+  })
+
+   
+}*/
+
+getData()
+
+  
+
+
+
+
+
+
+</script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+</body>
+</html>
